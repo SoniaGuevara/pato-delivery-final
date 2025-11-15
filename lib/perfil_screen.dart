@@ -1,59 +1,1 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/auth/auth_bloc.dart';
-import '../bloc/auth/auth_event.dart';
-
-class PerfilScreen extends StatelessWidget {
-  const PerfilScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Mi Perfil',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.amber,
-        foregroundColor: Colors.black,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesión',
-            onPressed: () {
-              // Envía el evento al AuthBloc para cerrar sesión
-              context.read<AuthBloc>().add(const AuthLogoutRequested());
-
-              // Muestra un mensaje visual
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Sesión cerrada correctamente.'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.person, size: 100, color: Colors.amber),
-            SizedBox(height: 20),
-            Text(
-              'Bienvenido a tu perfil',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Desde aquí podrás ver y gestionar tus datos de usuario.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+import 'package:flutter/material.dart';import 'package:flutter_bloc/flutter_bloc.dart';import 'package:firebase_auth/firebase_auth.dart';import '../bloc/auth/auth_bloc.dart';import '../bloc/auth/auth_event.dart';import '../bloc/auth/auth_state.dart';class PerfilScreen extends StatefulWidget {  const PerfilScreen({super.key});  @override  State<PerfilScreen> createState() => _PerfilScreenState();}class _PerfilScreenState extends State<PerfilScreen> {  Future<void> _editarNombre(User user) async {    final controller = TextEditingController(text: user.displayName);    final nuevoNombre = await showDialog<String>(      context: context,      builder: (context) => AlertDialog(        backgroundColor: Colors.black87,        title: const Text("Editar nombre",            style: TextStyle(color: Colors.white)),        content: TextField(          controller: controller,          style: const TextStyle(color: Colors.white),          decoration: const InputDecoration(            labelText: "Nuevo nombre",            labelStyle: TextStyle(color: Colors.white70),            enabledBorder:            OutlineInputBorder(borderSide: BorderSide(color: Colors.white38)),            focusedBorder:            OutlineInputBorder(borderSide: BorderSide(color: Colors.amber)),          ),        ),        actions: [          TextButton(            onPressed: () => Navigator.pop(context),            child: const Text("Cancelar", style: TextStyle(color: Colors.amber)),          ),          ElevatedButton(            style: ElevatedButton.styleFrom(              backgroundColor: Colors.amber,              foregroundColor: Colors.black,            ),            onPressed: () => Navigator.pop(context, controller.text.trim()),            child: const Text("Guardar"),          ),        ],      ),    );    if (nuevoNombre != null && nuevoNombre.isNotEmpty) {      await user.updateDisplayName(nuevoNombre);      setState(() {});    }  }  @override  Widget build(BuildContext context) {    return Scaffold(      backgroundColor: const Color(0xff1A1A1A), // negro suave      appBar: AppBar(        title: const Text("Mi Perfil",            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),        backgroundColor: Colors.black,        foregroundColor: Colors.white,        elevation: 1,      ),      body: BlocBuilder<AuthBloc, AuthState>(        builder: (context, state) {          if (state.status != AuthStatus.authenticated) {            return const Center(              child: Text("No hay usuario logueado",                  style: TextStyle(color: Colors.white)),            );          }          final user = FirebaseAuth.instance.currentUser;          if (user == null) {            return const Center(                child: Text("Error cargando usuario",                    style: TextStyle(color: Colors.white)));          }          final foto = user.photoURL;          final nombre = user.displayName ?? "Usuario";          final email = user.email ?? "";          return SingleChildScrollView(            padding: const EdgeInsets.all(20),            child: Column(              children: [                //foto de perfil                CircleAvatar(                  radius: 60,                  backgroundColor: Colors.amber.shade600,                  backgroundImage:                  foto != null ? NetworkImage(foto) : null,                  child: foto == null                      ? const Icon(Icons.person,                      size: 60, color: Colors.black87)                      : null,                ),                const SizedBox(height: 20),                //nombre                Text(                  nombre,                  style: const TextStyle(                      fontSize: 26,                      fontWeight: FontWeight.bold,                      color: Colors.white),                ),                const SizedBox(height: 5),                //mail                Text(                  email,                  style: const TextStyle(color: Colors.white70, fontSize: 16),                ),                const SizedBox(height: 25),                //editar nombre                ElevatedButton.icon(                  onPressed: () => _editarNombre(user),                  icon: const Icon(Icons.edit, color: Colors.black),                  label: const Text("Editar nombre",                      style: TextStyle(color: Colors.black)),                  style: ElevatedButton.styleFrom(                    backgroundColor: Colors.amber,                    padding: const EdgeInsets.symmetric(                        horizontal: 25, vertical: 12),                    shape: RoundedRectangleBorder(                        borderRadius: BorderRadius.circular(12)),                  ),                ),                const SizedBox(height: 30),                //tarjeta de info                Card(                  color: const Color(0xff2A2A2A),                  shape: RoundedRectangleBorder(                      borderRadius: BorderRadius.circular(16)),                  elevation: 3,                  child: Padding(                    padding: const EdgeInsets.all(20),                    child: Column(                      children: [                        _infoTile(Icons.person, "Nombre", nombre),                        const Divider(color: Colors.white24),                        _infoTile(Icons.email, "Email", email),                        const Divider(color: Colors.white24),                        _infoTile(Icons.key, "ID", user.uid),                      ],                    ),                  ),                ),                const SizedBox(height: 25),                //cierre de sesión                ElevatedButton.icon(                  onPressed: () {                    context.read<AuthBloc>().add(const AuthLogoutRequested());                    ScaffoldMessenger.of(context).showSnackBar(                      const SnackBar(                        content: Text('Sesión cerrada correctamente.'),                        duration: Duration(seconds: 2),                      ),                    );                  },                  icon: const Icon(Icons.logout, color: Colors.white),                  label: const Text("Cerrar sesión",                      style: TextStyle(color: Colors.white)),                  style: ElevatedButton.styleFrom(                    backgroundColor: Colors.redAccent.shade700,                    foregroundColor: Colors.white,                    minimumSize: const Size(double.infinity, 55),                    padding: const EdgeInsets.symmetric(vertical: 16),                    shape: RoundedRectangleBorder(                      borderRadius: BorderRadius.circular(14),                    ),                    elevation: 4,                  ),                ),              ],            ),          );        },      ),    );  }  Widget _infoTile(IconData icon, String title, String value) {    return Row(      children: [        Icon(icon, color: Colors.amber),        const SizedBox(width: 12),        Expanded(          child: Column(            crossAxisAlignment: CrossAxisAlignment.start,            children: [              Text(title,                  style: const TextStyle(fontSize: 14, color: Colors.white54)),              const SizedBox(height: 2),              Text(value,                  style: const TextStyle(                      fontSize: 16,                      fontWeight: FontWeight.w600,                      color: Colors.white)),            ],          ),        )      ],    );  }}
