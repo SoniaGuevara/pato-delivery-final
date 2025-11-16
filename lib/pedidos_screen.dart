@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pato_delivery_final/bloc/pedidos/pedidos_bloc.dart';
 import 'package:pato_delivery_final/bloc/pedidos/pedidos_event.dart';
@@ -15,7 +16,7 @@ class PedidosScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: colorScheme.surfaceVariant.withOpacity(0.9),
       appBar: AppBar(
-        title: const Text('Mis Pedidos'),
+        title: const Text('Pedidos entrantes'),
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
       ),
@@ -41,26 +42,21 @@ class PedidosScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
             children: [
-              Text(
-                'Pedidos entrantes',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
+              if (state.pendientes.isEmpty) ...[
+                _buildEmptyState(
+                    context, 'No hay pedidos esperando tu respuesta'),
+              ] else ...[
+                ...state.pendientes.map(
+                  (pedido) => _buildPedidoCard(
+                    context,
+                    pedido,
+                    aceptar: () =>
+                        context.read<PedidosBloc>().add(AceptarPedido(pedido)),
+                    rechazar: () =>
+                        context.read<PedidosBloc>().add(RechazarPedido(pedido)),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              if (state.pendientes.isEmpty)
-                _buildEmptyState(context, 'No hay pedidos esperando tu respuesta'),
-              ...state.pendientes.map(
-                (pedido) => _buildPedidoCard(
-                  context,
-                  pedido,
-                  aceptar: () =>
-                      context.read<PedidosBloc>().add(AceptarPedido(pedido)),
-                  rechazar: () =>
-                      context.read<PedidosBloc>().add(RechazarPedido(pedido)),
-                ),
-              ),
+              ],
               const SizedBox(height: 32),
               Text(
                 'Historial reciente',
@@ -182,9 +178,10 @@ class PedidosScreen extends StatelessWidget {
                           colorScheme.secondaryContainer.withOpacity(0.8),
                       label: Text(
                         item,
-                        style: TextStyle(
-                            color: colorScheme.onSecondaryContainer,
-                            fontWeight: FontWeight.w500),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   )
@@ -226,6 +223,14 @@ class PedidosScreen extends StatelessWidget {
     );
   }
 
+  void _abrirDetallePedido(BuildContext context, Pedido pedido) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PedidoDetalleScreen(pedido: pedido),
+      ),
+    );
+  }
+
   Widget _buildHistorialTile(BuildContext context, Pedido pedido) {
     final esAceptado = pedido.estado == 'Aceptado';
     final color = esAceptado ? Colors.green.shade600 : Colors.redAccent;
@@ -234,6 +239,8 @@ class PedidosScreen extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
+        onTap: esAceptado ? () => _abrirDetallePedido(context, pedido) : null,
+        enabled: esAceptado,
         leading: Icon(icon, color: color),
         title: Text(
           pedido.restaurante,
@@ -247,6 +254,123 @@ class PedidosScreen extends StatelessWidget {
           pedido.estado,
           style: TextStyle(color: color, fontWeight: FontWeight.bold),
         ),
+      ),
+    );
+  }
+}
+
+class PedidoDetalleScreen extends StatelessWidget {
+  const PedidoDetalleScreen({super.key, required this.pedido});
+
+  final Pedido pedido;
+
+  void _copiarDireccion(BuildContext context) {
+    Clipboard.setData(ClipboardData(text: pedido.direccion));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Dirección copiada al portapapeles')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Detalles del pedido'),
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              pedido.restaurante,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            _buildInfoRow(
+              context,
+              icon: Icons.location_on,
+              label: 'Dirección',
+              value: pedido.direccion,
+            ),
+            const SizedBox(height: 12),
+            _buildInfoRow(
+              context,
+              icon: Icons.person,
+              label: 'Contacto',
+              value: pedido.repartidor,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Artículos',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            ...pedido.items.map(
+              (item) => ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.fastfood),
+                title: Text(item),
+              ),
+            ),
+            const Spacer(),
+            FilledButton.icon(
+              onPressed: () => _copiarDireccion(context),
+              icon: const Icon(Icons.copy),
+              label: const Text('Copiar dirección'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceVariant.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: colorScheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: colorScheme.onSurface.withOpacity(0.7),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(color: colorScheme.onSurface),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
