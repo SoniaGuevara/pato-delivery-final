@@ -14,11 +14,12 @@ class PedidosRepository {
   final _random = Random();
 
   Stream<Pedido> escucharPedidosEntrantes() async* {
+    const maxPedidosSimulados = 5;
     var index = 0;
     // Se emite un primer pedido rápidamente para que la pantalla no quede vacía
     // al iniciar.
     await Future.delayed(const Duration(seconds: 2));
-    while (true) {
+    while (index < maxPedidosSimulados) {
       final base = _pedidosSimulados[index % _pedidosSimulados.length];
       final totalAleatorio = base.total + _random.nextDouble() * 5;
       yield base.copyWith(
