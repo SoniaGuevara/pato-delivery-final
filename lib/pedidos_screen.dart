@@ -463,4 +463,227 @@ class PedidoDetalleScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _abrirDetallePedido(BuildContext context, Pedido pedido) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PedidoDetalleScreen(pedido: pedido),
+      ),
+    );
+  }
+
+  Widget _buildHistorialTile(BuildContext context, Pedido pedido) {
+    final esRechazado = pedido.estado == 'Rechazado';
+    final esEntregado = pedido.estado == 'Entregado';
+    final esEnCurso = pedido.estado == 'En curso';
+    final color = esEntregado
+        ? Colors.green.shade600
+        : esEnCurso
+            ? Colors.orange.shade700
+            : Colors.redAccent;
+    final icon = esEntregado
+        ? Icons.check_circle
+        : esEnCurso
+            ? Icons.delivery_dining
+            : Icons.cancel;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: ListTile(
+        onTap: esRechazado ? null : () => _abrirDetallePedido(context, pedido),
+        enabled: !esRechazado,
+        leading: Icon(icon, color: color),
+        title: Text(
+          pedido.restaurante,
+          style: TextStyle(color: colorScheme.onSurface),
+        ),
+        subtitle: Text(
+          'Total: \$${pedido.total.toStringAsFixed(2)}',
+          style: TextStyle(color: colorScheme.onSurfaceVariant),
+        ),
+        trailing: Text(
+          pedido.estado,
+          style: TextStyle(color: color, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+}
+
+class PedidoDetalleScreen extends StatelessWidget {
+  const PedidoDetalleScreen({super.key, required this.pedido});
+
+  final Pedido pedido;
+
+  void _copiarDireccion(BuildContext context, Pedido pedidoActual) {
+    Clipboard.setData(ClipboardData(text: pedidoActual.direccion));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Dirección copiada al portapapeles')),
+    );
+  }
+
+  void _marcarComoEntregado(BuildContext context, Pedido pedidoActual) {
+    context
+        .read<PedidosBloc>()
+        .add(MarcarPedidoEntregado(pedidoActual.id));
+    context
+        .read<RankingBloc>()
+        .add(const RegistrarEntregaUsuarioActual());
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Pedido marcado como entregado')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return BlocBuilder<PedidosBloc, PedidosState>(
+      buildWhen: (previous, current) => previous.gestionados != current.gestionados,
+      builder: (context, state) {
+        final pedidoActual = state.gestionados.firstWhere(
+          (p) => p.id == pedido.id,
+          orElse: () => pedido,
+        );
+        final entregado = pedidoActual.estado == 'Entregado';
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Detalles del pedido'),
+            backgroundColor: colorScheme.primary,
+            foregroundColor: colorScheme.onPrimary,
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        pedidoActual.restaurante,
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ),
+                    Chip(
+                      avatar: Icon(
+                        entregado ? Icons.check_circle : Icons.delivery_dining,
+                        color: Colors.white,
+                      ),
+                      label: Text(
+                        pedidoActual.estado,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      backgroundColor:
+                          entregado ? Colors.green.shade600 : Colors.orange.shade700,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildInfoRow(
+                  context,
+                  icon: Icons.location_on,
+                  label: 'Dirección',
+                  value: pedidoActual.direccion,
+                ),
+                const SizedBox(height: 12),
+                _buildInfoRow(
+                  context,
+                  icon: Icons.person,
+                  label: 'Contacto',
+                  value: pedidoActual.repartidor,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Artículos',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                ...pedidoActual.items.map(
+                  (item) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.fastfood),
+                    title: Text(item),
+                  ),
+                ),
+                const Spacer(),
+                SwitchListTile.adaptive(
+                  value: entregado,
+                  onChanged: entregado
+                      ? null
+                      : (value) {
+                          if (value) {
+                            _marcarComoEntregado(context, pedidoActual);
+                          }
+                        },
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Marcar como entregado'),
+                  subtitle: Text(
+                    entregado
+                        ? 'Este pedido ya fue completado'
+                        : 'Actívalo cuando hayas entregado el pedido',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: () => _copiarDireccion(context, pedidoActual),
+                  icon: const Icon(Icons.copy),
+                  label: const Text('Copiar dirección'),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceVariant.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: colorScheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: colorScheme.onSurface.withOpacity(0.7),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(color: colorScheme.onSurface),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
