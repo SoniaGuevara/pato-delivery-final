@@ -121,7 +121,10 @@ class _MainScreenState extends State<MainScreen> {
     return BlocListener<PedidosBloc, PedidosState>(
       listenWhen: (previous, current) =>
           current.pendientes.length > previous.pendientes.length,
-      listener: (_, __) => SystemSound.play(SystemSoundType.alert),
+      listener: (_, __) {
+        SystemSound.play(SystemSoundType.alert);
+        HapticFeedback.mediumImpact();
+      },
       child: Scaffold(
         body: IndexedStack(
           index: _currentIndex,
@@ -132,13 +135,15 @@ class _MainScreenState extends State<MainScreen> {
               previous.pendientes.length != current.pendientes.length,
           builder: (context, state) {
             final badgeCount = state.pendientes.length;
+            final theme = Theme.of(context);
             return BottomNavigationBar(
               currentIndex: _currentIndex,
               onTap: (index) => setState(() => _currentIndex = index),
               type: BottomNavigationBarType.fixed,
-              backgroundColor: Colors.black,
-              selectedItemColor: Colors.amber,
-              unselectedItemColor: Colors.grey.shade600,
+              backgroundColor: theme.colorScheme.surface,
+              selectedItemColor: theme.colorScheme.primary,
+              unselectedItemColor:
+                  theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
               items: [
                 _buildNavItem(icon: Icons.home, label: 'Inicio'),
                 _buildNavItem(
