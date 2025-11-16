@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pato_delivery_final/bloc/pedidos/pedidos_bloc.dart';
 import 'package:pato_delivery_final/bloc/pedidos/pedidos_event.dart';
 import 'package:pato_delivery_final/bloc/pedidos/pedidos_state.dart';
-import 'package:pato_delivery_final/bloc/pedidos/pedidos_event.dart';
 import 'package:pato_delivery_final/models/pedido_model.dart';
 
 class PedidosScreen extends StatelessWidget {
@@ -11,186 +10,165 @@ class PedidosScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ← IMPORTANTE: dispara la carga de pedidos al abrir la pantalla
-    context.read<PedidosBloc>().add(CargarPedidos());
-
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         title: const Text('Mis Pedidos'),
         backgroundColor: Colors.amber[700],
         foregroundColor: Colors.black,
       ),
+      body: BlocBuilder<PedidosBloc, PedidosState>(
+        builder: (context, state) {
+          if (state.cargando) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-      body: RefreshIndicator(
-        onRefresh: () async {
-          context.read<PedidosBloc>().add(CargarPedidos());
+          if (state.mensajeError != null) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  state.mensajeError!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70),
+                ),
+              ),
+            );
+          }
+
+          return ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            children: [
+              const Text(
+                'Pedidos entrantes',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (state.pendientes.isEmpty)
+                _buildEmptyState('No hay pedidos esperando tu respuesta'),
+              ...state.pendientes.map(
+                (pedido) => _buildPedidoCard(
+                  context,
+                  pedido,
+                  aceptar: () =>
+                      context.read<PedidosBloc>().add(AceptarPedido(pedido)),
+                  rechazar: () =>
+                      context.read<PedidosBloc>().add(RechazarPedido(pedido)),
+                ),
+              ),
+              const SizedBox(height: 32),
+              const Text(
+                'Historial reciente',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (state.gestionados.isEmpty)
+                _buildEmptyState('Acepta o rechaza pedidos para verlos aquí'),
+              ...state.gestionados.map(_buildHistorialTile),
+            ],
+          );
         },
-        child: BlocBuilder<PedidosBloc, PedidosState>(
-          builder: (context, state) {
-            if (state is PedidosCargando || state is PedidosInicial) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            else if (state is PedidosCargados) {
-              if (state.pedidos.isEmpty) {
-                return _buildEmptyView();
-              }
-              return ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                itemCount: state.pedidos.length,
-                separatorBuilder: (context, _) => const SizedBox(height: 4),
-                itemBuilder: (context, index) {
-                  final pedido = state.pedidos[index];
-                  return _buildPedidoCard(context, pedido);
-                },
-              );
-            }
-            else if (state is PedidosError) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    state.mensaje,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white70),
-                  ),
-                ),
-              );
-            }
-            return const SizedBox();
-          },
-        ),
       ),
     );
   }
 
-  Widget _buildEmptyView() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.shopping_bag_outlined, color: Colors.white38, size: 80),
-          SizedBox(height: 12),
-          Text(
-            'Todavía no registras pedidos.',
-            style: TextStyle(color: Colors.white70, fontSize: 16),
-          ),
-        ],
+  Widget _buildEmptyState(String text) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade900,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.white60),
       ),
     );
   }
 
-  Widget _buildPedidoCard(BuildContext context, Pedido pedido) {
-    return AnimatedOpacity(
-      opacity: 1,
-      duration: const Duration(milliseconds: 300),
-      child: GestureDetector(
-        onTap: () {},
-        child: Card(
-          color: const Color(0xFF1E1E1E),
-          margin: const EdgeInsets.symmetric(horizontal: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          elevation: 3,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
+  Widget _buildPedidoCard(
+    BuildContext context,
+    Pedido pedido, {
+    required VoidCallback aceptar,
+    required VoidCallback rechazar,
+  }) {
+    return Card(
+      color: Colors.black87,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              pedido.restaurante,
+              style: const TextStyle(
+                color: Colors.amber,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text('Dirección: ${pedido.direccion}',
+                style: const TextStyle(color: Colors.white70)),
+            Text('Contacto: ${pedido.repartidor}',
+                style: const TextStyle(color: Colors.white70)),
+            const SizedBox(height: 6),
+            Text(
+              'Total: \$${pedido.total.toStringAsFixed(2)}',
+              style: const TextStyle(
+                color: Colors.amberAccent,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: pedido.items
+                  .map(
+                    (item) => Chip(
+                      backgroundColor: Colors.grey.shade800,
+                      label: Text(item),
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 12),
+            Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.amber[700],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.restaurant_menu, color: Colors.black, size: 26),
-                ),
-
-                const SizedBox(width: 14),
-
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        pedido.restaurante,
-                        style: const TextStyle(
-                          color: Colors.amber,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-
-                      const SizedBox(height: 4),
-
-                      Row(
-                        children: [
-                          _buildEstadoBadge(pedido.estado),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Total \$${pedido.total.toStringAsFixed(2)}',
-                            style: const TextStyle(color: Colors.white70),
-                          )
-                        ],
-                      ),
-
-                      const SizedBox(height: 6),
-
-                      Text('Dirección: ${pedido.direccion}',
-                          style: const TextStyle(color: Colors.white54)),
-                      Text('Repartidor: ${pedido.repartidor}',
-                          style: const TextStyle(color: Colors.white54)),
-                    ],
+                  child: ElevatedButton.icon(
+                    onPressed: aceptar,
+                    icon: const Icon(Icons.check),
+                    label: const Text('Aceptar'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.greenAccent.shade700,
+                      foregroundColor: Colors.black,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: rechazar,
+                    icon: const Icon(Icons.close),
+                    label: const Text('Rechazar'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.redAccent,
+                      side: const BorderSide(color: Colors.redAccent),
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEstadoBadge(String estado) {
-    late Color bgColor;
-    late Color textColor;
-
-    switch (estado.toLowerCase()) {
-      case 'entregado':
-        bgColor = const Color(0xFF4CAF50); // Verde moderno
-        textColor = Colors.white;
-        break;
-
-      case 'en camino':
-        bgColor = const Color(0xFF42A5F5); // Azul cielo
-        textColor = Colors.white;
-        break;
-
-      case 'preparando':
-        bgColor = Colors.amber[700]!.withOpacity(0.15); // Fondo claro ámbar
-        textColor = Colors.white;
-        break;
-
-      default:
-        bgColor = Colors.grey[700]!;
-        textColor = Colors.white;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-        border: estado.toLowerCase() == 'preparando'
-            ? Border.all(color: Colors.amber[400]!, width: 1.3)
-            : null,
-      ),
-      child: Text(
-        estado,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 13,
-          fontWeight: FontWeight.bold,
+          ],
         ),
       ),
     );
