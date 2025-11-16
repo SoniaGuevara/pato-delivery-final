@@ -44,14 +44,12 @@ class PedidosBloc extends Bloc<PedidosEvent, PedidosState> {
     _gestionarPedido(event.pedido, 'Rechazado', emit);
   }
 
-  void _gestionarPedido(
-      Pedido pedido, String nuevoEstado, Emitter<PedidosState> emit) {
-    final pendientes = List<Pedido>.from(state.pendientes)
-      ..removeWhere((p) => p.id == pedido.id);
-    final gestionados = List<Pedido>.from(state.gestionados)
-      ..insert(0, pedido.copyWith(estado: nuevoEstado));
-    if (gestionados.length > 20) {
-      gestionados.removeLast();
+
+    try {
+      final pedidos = await _pedidosRepository.obtenerPedidos();
+      emit(PedidosCargados(pedidos));
+    } catch (e) {
+      emit(PedidosError('Error al cargar los pedidos'));
     }
     emit(state.copyWith(pendientes: pendientes, gestionados: gestionados));
   }
@@ -68,4 +66,5 @@ class PedidosBloc extends Bloc<PedidosEvent, PedidosState> {
     _pedidosSubscription?.cancel();
     return super.close();
   }
+
 }
