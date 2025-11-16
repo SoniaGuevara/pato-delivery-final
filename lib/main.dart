@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider(create: (_) => PedidosRepository()),
-        RepositoryProvider(create: (_) => const RankingRepository()),
+        RepositoryProvider(create: (_) => RankingRepository()),
       ],
       child: MultiBlocProvider(
         providers: [

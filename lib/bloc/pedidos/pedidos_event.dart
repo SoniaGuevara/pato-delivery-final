@@ -39,6 +39,15 @@ class RechazarPedido extends PedidosEvent {
   List<Object?> get props => [pedido];
 }
 
+class MarcarPedidoEntregado extends PedidosEvent {
+  final String pedidoId;
+
+  const MarcarPedidoEntregado(this.pedidoId);
+
+  @override
+  List<Object?> get props => [pedidoId];
+}
+
 class PedidosStreamError extends PedidosEvent {
   const PedidosStreamError();
 }

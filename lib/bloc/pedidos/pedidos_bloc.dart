@@ -12,6 +12,7 @@ class PedidosBloc extends Bloc<PedidosEvent, PedidosState> {
     on<PedidoRecibido>(_onPedidoRecibido);
     on<AceptarPedido>(_onAceptarPedido);
     on<RechazarPedido>(_onRechazarPedido);
+    on<MarcarPedidoEntregado>(_onMarcarPedidoEntregado);
     on<PedidosStreamError>(_onErrorStream);
   }
 
@@ -37,7 +38,7 @@ class PedidosBloc extends Bloc<PedidosEvent, PedidosState> {
   }
 
   void _onAceptarPedido(AceptarPedido event, Emitter<PedidosState> emit) {
-    _gestionarPedido(event.pedido, 'Aceptado', emit);
+    _gestionarPedido(event.pedido, 'En curso', emit);
   }
 
   void _onRechazarPedido(RechazarPedido event, Emitter<PedidosState> emit) {
@@ -54,6 +55,21 @@ class PedidosBloc extends Bloc<PedidosEvent, PedidosState> {
       gestionados.removeLast();
     }
     emit(state.copyWith(pendientes: pendientes, gestionados: gestionados));
+  }
+
+  void _onMarcarPedidoEntregado(
+      MarcarPedidoEntregado event, Emitter<PedidosState> emit) {
+    final yaEntregado = state.gestionados.any(
+      (pedido) => pedido.id == event.pedidoId && pedido.estado == 'Entregado',
+    );
+    if (yaEntregado) return;
+
+    final gestionadosActualizados = state.gestionados
+        .map((pedido) => pedido.id == event.pedidoId
+            ? pedido.copyWith(estado: 'Entregado')
+            : pedido)
+        .toList();
+    emit(state.copyWith(gestionados: gestionadosActualizados));
   }
 
   void _onErrorStream(PedidosStreamError event, Emitter<PedidosState> emit) {
