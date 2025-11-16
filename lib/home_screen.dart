@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:pato_delivery_final/bloc/pedidos/pedidos_bloc.dart';
+import 'package:pato_delivery_final/bloc/pedidos/pedidos_event.dart';
+import 'package:pato_delivery_final/bloc/pedidos/pedidos_state.dart';
 import 'package:pato_delivery_final/bloc/ranking/ranking_bloc.dart';
+import 'package:pato_delivery_final/bloc/ranking/ranking_event.dart';
 import 'package:pato_delivery_final/bloc/ranking/ranking_state.dart';
+import 'package:pato_delivery_final/models/pedido_model.dart';
 import 'package:pato_delivery_final/models/repartidor_model.dart';
+import 'package:pato_delivery_final/pedidos_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -40,36 +46,123 @@ class HomeScreen extends StatelessWidget {
 class OrderTrackingCard extends StatelessWidget {
   const OrderTrackingCard({super.key});
 
+  void _marcarComoEntregado(BuildContext context, Pedido pedido) {
+    context.read<PedidosBloc>().add(MarcarPedidoEntregado(pedido.id));
+    context.read<RankingBloc>().add(const RegistrarEntregaUsuarioActual());
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Pedido marcado como entregado')),
+    );
+  }
+
+  void _abrirDetalle(BuildContext context, Pedido pedido) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => PedidoDetalleScreen(pedido: pedido)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      color: Colors.amber,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    return BlocBuilder<PedidosBloc, PedidosState>(
+      buildWhen: (previous, current) =>
+          previous.gestionados != current.gestionados,
+      builder: (context, state) {
+        Pedido? pedidoEnCurso;
+        for (final pedido in state.gestionados) {
+          if (pedido.estado == 'En curso') {
+            pedidoEnCurso = pedido;
+            break;
+          }
+        }
+
+        return Card(
+          elevation: 2,
+          color: Colors.amber,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.local_shipping, color: Colors.black),
-                const SizedBox(width: 8),
-                const Text('Seguimiento de Pedido', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
+                Row(
+                  children: [
+                    Icon(Icons.local_shipping, color: Colors.black),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Seguimiento de Pedido',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (pedidoEnCurso == null) ...[
+                  const Text(
+                    'No tienes pedidos en camino',
+                    style: TextStyle(fontSize: 16, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Acepta un pedido desde la pestaña Pedidos para ver el seguimiento aquí.',
+                    style: TextStyle(color: Colors.black87),
+                  ),
+                ] else ...[
+                  Text(
+                    pedidoEnCurso.restaurante,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    pedidoEnCurso.direccion,
+                    style: const TextStyle(color: Colors.black87),
+                  ),
+                  const SizedBox(height: 8),
+                  LinearProgressIndicator(
+                    value: 0.7,
+                    backgroundColor: Colors.black,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Tiempo estimado: 15 minutos',
+                    style: TextStyle(color: Colors.black87),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      FilledButton.icon(
+                        onPressed: () => _abrirDetalle(context, pedidoEnCurso!),
+                        icon: const Icon(Icons.open_in_new),
+                        label: const Text('Ver detalles'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.amber,
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: () => _marcarComoEntregado(context, pedidoEnCurso!),
+                        icon: const Icon(Icons.check_circle_outline),
+                        label: const Text('Marcar entregado'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.black,
+                          side: const BorderSide(color: Colors.black87),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
-            const SizedBox(height: 16),
-            const Text('Tu pedido está en camino', style: TextStyle(fontSize: 16, color: Colors.black54)),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(
-              value: 0.7,
-              backgroundColor: Colors.black,
-              color: Colors.white,
-            ),
-            const SizedBox(height: 8),
-            const Text('Tiempo estimado: 15 minutos', style: TextStyle(color: Colors.black87)),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
