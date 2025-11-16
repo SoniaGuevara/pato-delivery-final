@@ -4,9 +4,13 @@ import 'package:pato_delivery_final/models/ranking_resumen.dart';
 import 'package:pato_delivery_final/models/repartidor_model.dart';
 
 class RankingRepository {
-  const RankingRepository();
+  RankingResumen? _resumenActual;
 
   Future<RankingResumen> obtenerRanking() async {
+    if (_resumenActual != null) {
+      return _resumenActual!;
+    }
+
     await Future.delayed(const Duration(milliseconds: 600));
 
     const repartidores = [
@@ -29,9 +33,34 @@ class RankingRepository {
       avatarUrl: '',
     );
 
-    return const RankingResumen(
+    _resumenActual = const RankingResumen(
       repartidores: repartidores,
       usuarioActual: usuarioActual,
     );
+
+    return _resumenActual!;
+  }
+
+  RankingResumen registrarEntregaUsuarioActual() {
+    final resumen = _resumenActual;
+    if (resumen == null) {
+      throw StateError('El ranking aún no ha sido cargado');
+    }
+
+    final usuarioActualActualizado =
+        resumen.usuarioActual.copyWith(entregas: resumen.usuarioActual.entregas + 1);
+
+    final repartidoresActualizados = resumen.repartidores
+        .map((repartidor) => repartidor.nombre == usuarioActualActualizado.nombre
+            ? repartidor.copyWith(entregas: usuarioActualActualizado.entregas)
+            : repartidor)
+        .toList();
+
+    _resumenActual = RankingResumen(
+      repartidores: repartidoresActualizados,
+      usuarioActual: usuarioActualActualizado,
+    );
+
+    return _resumenActual!;
   }
 }

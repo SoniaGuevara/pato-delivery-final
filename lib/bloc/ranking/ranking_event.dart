@@ -10,3 +10,7 @@ abstract class RankingEvent extends Equatable {
 class CargarRanking extends RankingEvent {
   const CargarRanking();
 }
+
+class RegistrarEntregaUsuarioActual extends RankingEvent {
+  const RegistrarEntregaUsuarioActual();
+}
