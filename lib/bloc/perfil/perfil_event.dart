@@ -72,3 +72,12 @@ class PerfilRegistrarEntrega extends PerfilEvent {
 class PerfilNotificacionesLimpiadas extends PerfilEvent {
   const PerfilNotificacionesLimpiadas();
 }
+
+class PerfilErrorReportado extends PerfilEvent {
+  const PerfilErrorReportado(this.mensaje);
+
+  final String mensaje;
+
+  @override
+  List<Object?> get props => [mensaje];
+}
