@@ -285,7 +285,8 @@ class GamificationBanner extends StatelessWidget {
         final tiles = [
           _MotivationTile(
             icon: Icons.flag_rounded,
-            gradient: const [Color(0xFFFFD54F), Color(0xFFFFB300)],
+            accent: Colors.amber,
+            background: const Color(0xFF111111),
             title: 'Tu meta semanal',
             highlight: '$metaSemanal entregas',
             subtitle: faltan == 0
@@ -296,14 +297,16 @@ class GamificationBanner extends StatelessWidget {
           ),
           _MotivationTile(
             icon: Icons.flash_on_rounded,
-            gradient: const [Color(0xFF616161), Color(0xFF212121)],
+            accent: const Color(0xFF00E5FF),
+            background: const Color(0xFF0D0D0D),
             title: 'Racha activa',
             highlight: '$streakDias días seguidos',
             subtitle: 'Seguí así para sumar bonos',
           ),
           _MotivationTile(
             icon: Icons.star_rounded,
-            gradient: const [Color(0xFFFF8F00), Color(0xFFFFC107)],
+            accent: const Color(0xFFFFF176),
+            background: const Color(0xFF141414),
             title: 'Nuevo logro',
             highlight: logroTitulo,
             subtitle: logroDescripcion,
@@ -401,7 +404,8 @@ class _MotivationTile extends StatelessWidget {
   final String title;
   final String highlight;
   final String subtitle;
-  final List<Color> gradient;
+  final Color background;
+  final Color accent;
   final bool showContent;
 
   const _MotivationTile({
@@ -410,7 +414,8 @@ class _MotivationTile extends StatelessWidget {
     this.title = '',
     this.highlight = '',
     this.subtitle = '',
-    this.gradient = const [Color(0xFF424242), Color(0xFF212121)],
+    this.background = const Color(0xFF1A1A1A),
+    this.accent = Colors.amber,
   }) : showContent = true;
 
   const _MotivationTile.skeleton({super.key})
@@ -418,61 +423,111 @@ class _MotivationTile extends StatelessWidget {
         title = '',
         highlight = '',
         subtitle = '',
-        gradient = const [Color(0xFF424242), Color(0xFF212121)],
+        background = const Color(0xFF1A1A1A),
+        accent = Colors.amber,
         showContent = false;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: gradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white12),
+        color: background,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.35),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.all(16),
+      constraints: const BoxConstraints(minHeight: 90),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: showContent
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Icon(icon, color: Colors.white, size: 28),
-                const SizedBox(height: 12),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    letterSpacing: 0.3,
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: accent,
+                    shape: BoxShape.circle,
                   ),
+                  child: Icon(icon, color: Colors.black, size: 26),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  highlight,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        highlight,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(color: Colors.white60),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(color: Colors.white70),
-                ),
+                )
               ],
             )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: const [
-                _SkeletonLine(widthFactor: 0.3),
-                SizedBox(height: 8),
-                _SkeletonLine(widthFactor: 0.8),
-                SizedBox(height: 4),
-                _SkeletonLine(widthFactor: 0.6),
+                _SkeletonCircle(),
+                SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _SkeletonLine(widthFactor: 0.35),
+                      SizedBox(height: 6),
+                      _SkeletonLine(widthFactor: 0.75),
+                      SizedBox(height: 4),
+                      _SkeletonLine(widthFactor: 0.55),
+                    ],
+                  ),
+                ),
               ],
             ),
+    );
+  }
+}
+
+class _SkeletonCircle extends StatelessWidget {
+  const _SkeletonCircle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white10,
+        ),
+      ),
     );
   }
 }
