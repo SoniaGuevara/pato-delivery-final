@@ -16,6 +16,7 @@ class PerfilScreen extends StatelessWidget {
 
   static const _panelColor = Color(0xFF111111);
   static const _fieldColor = Color(0xFF1C1C1E);
+  static const double _statCardHeight = 150;
 
   @override
   Widget build(BuildContext context) {
@@ -264,6 +265,7 @@ class PerfilScreen extends StatelessWidget {
     final registro =
         '${perfil.fechaRegistro.day}/${perfil.fechaRegistro.month}/${perfil.fechaRegistro.year}';
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: _StatCard(
@@ -272,6 +274,7 @@ class PerfilScreen extends StatelessWidget {
             icon: Icons.star,
             subtitle: 'Promedio de clientes',
             color: Colors.amber,
+            height: _statCardHeight,
           ),
         ),
         const SizedBox(width: 16),
@@ -282,6 +285,7 @@ class PerfilScreen extends StatelessWidget {
             icon: Icons.local_shipping,
             subtitle: 'Completadas',
             color: Colors.greenAccent,
+            height: _statCardHeight,
           ),
         ),
         const SizedBox(width: 16),
@@ -292,6 +296,7 @@ class PerfilScreen extends StatelessWidget {
             icon: Icons.calendar_month,
             subtitle: 'Fecha de registro',
             color: Colors.blueAccent,
+            height: _statCardHeight,
           ),
         ),
       ],
@@ -402,6 +407,7 @@ class _StatCard extends StatelessWidget {
     required this.icon,
     required this.subtitle,
     required this.color,
+    required this.height,
   });
 
   final String title;
@@ -409,11 +415,13 @@ class _StatCard extends StatelessWidget {
   final IconData icon;
   final String subtitle;
   final Color color;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
+      constraints: BoxConstraints(minHeight: height),
       decoration: BoxDecoration(
         color: PerfilScreen._panelColor,
         borderRadius: BorderRadius.circular(20),
@@ -426,10 +434,11 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             value,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
