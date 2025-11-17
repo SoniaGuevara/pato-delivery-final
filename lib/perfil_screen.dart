@@ -32,6 +32,36 @@ class PerfilScreen extends StatelessWidget {
                   content: Text(state.mensaje!),
                   backgroundColor: Colors.green.shade600,
                 ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: opciones.map((opcion) {
+              final selected = opcion.valor == perfil.disponibilidad;
+              return ChoiceChip(
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(opcion.icono, size: 16,
+                        color: selected ? Colors.black : opcion.color),
+                    const SizedBox(width: 6),
+                    Text(opcion.texto),
+                  ],
+                ),
+                selected: selected,
+                labelStyle: TextStyle(
+                  color: selected ? Colors.black : Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+                onSelected: selected
+                    ? null
+                    : (_) => context
+                        .read<PerfilBloc>()
+                        .add(PerfilCambiarDisponibilidad(opcion.valor)),
+                selectedColor: Colors.amber,
+                backgroundColor: _fieldColor,
+                side: BorderSide(color: opcion.color.withOpacity(0.5)),
               );
               context.read<PerfilBloc>().add(const PerfilNotificacionesLimpiadas());
             } else if (state.error != null) {
@@ -382,12 +412,6 @@ class PerfilScreen extends StatelessWidget {
   }
 
   Future<void> _mostrarEditorPerfil(BuildContext context, PerfilUsuario perfil) async {
-    final bloc = context.read<PerfilBloc>();
-    final nombreController = TextEditingController(text: perfil.nombreCompleto);
-    final dniController = TextEditingController(text: perfil.dni);
-    final telefonoController = TextEditingController(text: perfil.telefono);
-    final formKey = GlobalKey<FormState>();
-
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -395,82 +419,8 @@ class PerfilScreen extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
-            left: 24,
-            right: 24,
-            top: 24,
-          ),
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  height: 4,
-                  width: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Editar datos',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 24),
-                _buildTextField(
-                  controller: nombreController,
-                  label: 'Nombre y apellido',
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? 'Ingresa tu nombre'
-                      : null,
-                ),
-                _buildTextField(
-                  controller: dniController,
-                  label: 'DNI',
-                ),
-                _buildTextField(
-                  controller: telefonoController,
-                  label: 'Teléfono',
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: () {
-                    if (formKey.currentState?.validate() ?? false) {
-                      bloc.add(PerfilGuardarDatosBasicos(
-                        nombre: nombreController.text,
-                        dni: dniController.text,
-                        telefono: telefonoController.text,
-                      ));
-                      FocusScope.of(sheetContext).unfocus();
-                      Navigator.of(sheetContext).pop();
-                    }
-                  },
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                    backgroundColor: Colors.amber,
-                    foregroundColor: Colors.black,
-                  ),
-                  child: const Text('Guardar cambios'),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+      builder: (sheetContext) => _PerfilEditorSheet(perfil: perfil),
     );
-
-    nombreController.dispose();
-    dniController.dispose();
-    telefonoController.dispose();
   }
 
   Widget _buildTextField({
@@ -555,6 +505,115 @@ class _StatCard extends StatelessWidget {
             style: const TextStyle(color: Colors.white54, fontSize: 12),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PerfilEditorSheet extends StatefulWidget {
+  const _PerfilEditorSheet({required this.perfil});
+
+  final PerfilUsuario perfil;
+
+  @override
+  State<_PerfilEditorSheet> createState() => _PerfilEditorSheetState();
+}
+
+class _PerfilEditorSheetState extends State<_PerfilEditorSheet> {
+  late final TextEditingController _nombreController;
+  late final TextEditingController _dniController;
+  late final TextEditingController _telefonoController;
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _nombreController = TextEditingController(text: widget.perfil.nombreCompleto);
+    _dniController = TextEditingController(text: widget.perfil.dni);
+    _telefonoController = TextEditingController(text: widget.perfil.telefono);
+  }
+
+  @override
+  void dispose() {
+    _nombreController.dispose();
+    _dniController.dispose();
+    _telefonoController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  height: 4,
+                  width: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Editar datos',
+                textAlign: TextAlign.center,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleLarge
+                    ?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 24),
+              _buildTextField(
+                controller: _nombreController,
+                label: 'Nombre y apellido',
+                validator: (value) => value == null || value.trim().isEmpty
+                    ? 'Ingresa tu nombre'
+                    : null,
+              ),
+              _buildTextField(
+                controller: _dniController,
+                label: 'DNI',
+              ),
+              _buildTextField(
+                controller: _telefonoController,
+                label: 'Teléfono',
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () {
+                  if (_formKey.currentState?.validate() ?? false) {
+                    context.read<PerfilBloc>().add(PerfilGuardarDatosBasicos(
+                          nombre: _nombreController.text,
+                          dni: _dniController.text,
+                          telefono: _telefonoController.text,
+                        ));
+                    FocusScope.of(context).unfocus();
+                    Navigator.of(context).pop();
+                  }
+                },
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  backgroundColor: Colors.amber,
+                  foregroundColor: Colors.black,
+                ),
+                child: const Text('Guardar cambios'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
