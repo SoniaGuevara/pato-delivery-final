@@ -50,8 +50,9 @@ class RankingRepository {
     final usuarioActualActualizado =
         resumen.usuarioActual.copyWith(entregas: resumen.usuarioActual.entregas + 1);
 
+    final nombreAnterior = resumen.usuarioActual.nombre;
     final repartidoresActualizados = resumen.repartidores
-        .map((repartidor) => repartidor.nombre == usuarioActualActualizado.nombre
+        .map((repartidor) => repartidor.nombre == nombreAnterior
             ? repartidor.copyWith(entregas: usuarioActualActualizado.entregas)
             : repartidor)
         .toList();
@@ -59,6 +60,40 @@ class RankingRepository {
     _resumenActual = RankingResumen(
       repartidores: repartidoresActualizados,
       usuarioActual: usuarioActualActualizado,
+    );
+
+    return _resumenActual!;
+  }
+
+  RankingResumen actualizarDatosUsuarioActual({
+    String? nombre,
+    String? avatarUrl,
+  }) {
+    final resumen = _resumenActual;
+    if (resumen == null) {
+      throw StateError('El ranking aún no ha sido cargado');
+    }
+
+    final anterior = resumen.usuarioActual;
+    final actualizado = anterior.copyWith(
+      nombre: nombre ?? anterior.nombre,
+      avatarUrl: avatarUrl ?? anterior.avatarUrl,
+    );
+
+    final nombreAnterior = anterior.nombre;
+    final repartidoresActualizados = resumen.repartidores.map((repartidor) {
+      if (repartidor.nombre == nombreAnterior) {
+        return repartidor.copyWith(
+          nombre: actualizado.nombre,
+          avatarUrl: avatarUrl ?? repartidor.avatarUrl,
+        );
+      }
+      return repartidor;
+    }).toList();
+
+    _resumenActual = RankingResumen(
+      repartidores: repartidoresActualizados,
+      usuarioActual: actualizado,
     );
 
     return _resumenActual!;

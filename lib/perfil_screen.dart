@@ -7,6 +7,8 @@ import '../bloc/auth/auth_event.dart';
 import '../bloc/perfil/perfil_bloc.dart';
 import '../bloc/perfil/perfil_event.dart';
 import '../bloc/perfil/perfil_state.dart';
+import '../bloc/ranking/ranking_bloc.dart';
+import '../bloc/ranking/ranking_event.dart';
 import '../models/perfil_usuario.dart';
 
 class PerfilScreen extends StatelessWidget {
@@ -17,29 +19,52 @@ class PerfilScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<PerfilBloc, PerfilState>(
-      listenWhen: (previous, current) =>
-          previous.mensaje != current.mensaje || previous.error != current.error,
-      listener: (context, state) {
-        final messenger = ScaffoldMessenger.of(context);
-        if (state.mensaje != null) {
-          messenger.showSnackBar(
-            SnackBar(
-              content: Text(state.mensaje!),
-              backgroundColor: Colors.green.shade600,
-            ),
-          );
-          context.read<PerfilBloc>().add(const PerfilNotificacionesLimpiadas());
-        } else if (state.error != null) {
-          messenger.showSnackBar(
-            SnackBar(
-              content: Text(state.error!),
-              backgroundColor: Colors.red.shade600,
-            ),
-          );
-          context.read<PerfilBloc>().add(const PerfilNotificacionesLimpiadas());
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<PerfilBloc, PerfilState>(
+          listenWhen: (previous, current) =>
+              previous.mensaje != current.mensaje || previous.error != current.error,
+          listener: (context, state) {
+            final messenger = ScaffoldMessenger.of(context);
+            if (state.mensaje != null) {
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(state.mensaje!),
+                  backgroundColor: Colors.green.shade600,
+                ),
+              );
+              context.read<PerfilBloc>().add(const PerfilNotificacionesLimpiadas());
+            } else if (state.error != null) {
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(state.error!),
+                  backgroundColor: Colors.red.shade600,
+                ),
+              );
+              context.read<PerfilBloc>().add(const PerfilNotificacionesLimpiadas());
+            }
+          },
+        ),
+        BlocListener<PerfilBloc, PerfilState>(
+          listenWhen: (previous, current) {
+            final prevPerfil = previous.perfil;
+            final currPerfil = current.perfil;
+            if (prevPerfil == null || currPerfil == null) {
+              return false;
+            }
+            return prevPerfil.nombreCompleto != currPerfil.nombreCompleto ||
+                prevPerfil.fotoUrl != currPerfil.fotoUrl;
+          },
+          listener: (context, state) {
+            final perfil = state.perfil;
+            if (perfil == null) return;
+            context.read<RankingBloc>().add(ActualizarDatosUsuarioActual(
+                  nombre: perfil.nombreCompleto,
+                  avatarUrl: perfil.fotoUrl.isEmpty ? null : perfil.fotoUrl,
+                ));
+          },
+        ),
+      ],
       child: BlocBuilder<PerfilBloc, PerfilState>(
         builder: (context, state) {
           final perfil = state.perfil;
@@ -425,6 +450,7 @@ class PerfilScreen extends StatelessWidget {
                         dni: dniController.text,
                         telefono: telefonoController.text,
                       ));
+                      FocusScope.of(sheetContext).unfocus();
                       Navigator.of(sheetContext).pop();
                     }
                   },
