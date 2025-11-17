@@ -17,22 +17,22 @@ class _LoginScreenState extends State<LoginScreen> {
   String _email = '';
   String _password = '';
   bool _obscure = true;
-  bool _isLoading = false; // 🔹 manejamos la carga localmente
+  bool _isLoading = false;
 
-  void _login() async {
+  Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
 
     setState(() => _isLoading = true);
 
-    // 🔹 Disparamos el evento del bloc
     context.read<AuthBloc>().add(
-      AuthLoginRequested(email: _email, password: _password),
-    );
+          AuthLoginRequested(email: _email, password: _password),
+        );
 
-    // 🔹 Esperamos un poco para mostrar feedback
     await Future.delayed(const Duration(seconds: 2));
-    setState(() => _isLoading = false);
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -58,8 +58,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   shrinkWrap: true,
                   physics: const BouncingScrollPhysics(),
                   children: [
-                    const SizedBox(height: 48),
-                    const _PatoLogo(),
+                    const SizedBox(height: 80),
+                    Image.asset(
+                      'assets/images/logo_pato.png',
+                      height: 140,
+                      fit: BoxFit.contain,
+                    ),
                     const SizedBox(height: 16),
                     const Text(
                       'Pato Delivery',
@@ -113,25 +117,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 25),
                     FilledButton(
                       onPressed: _isLoading ? null : _login,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.amber,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        textStyle: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
                       child: _isLoading
                           ? const SizedBox(
                               width: 22,
                               height: 22,
                               child: CircularProgressIndicator(
-                                color: Colors.black,
+                                color: Colors.white,
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text('Ingresar'),
+                          : const Text(
+                              'Ingresar',
+                              style: TextStyle(fontSize: 18),
+                            ),
                     ),
                     const SizedBox(height: 10),
                   ],
