@@ -32,9 +32,6 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 16),
             const DeliveryRankingCard(),
             const SizedBox(height: 16),
-            const SuperVelothModeCard(),
-            const SizedBox(height: 16),
-            const EmergencyButtonCard(),
           ],
         ),
       ),
@@ -254,88 +251,6 @@ class DeliveryRankingCard extends StatelessWidget {
             style: const TextStyle(color: Colors.black),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// Componente: SuperVelothModeCard
-class SuperVelothModeCard extends StatelessWidget {
-  const SuperVelothModeCard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: Colors.amber,
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            const Icon(Icons.flash_on, color: Colors.black, size: 48),
-            const SizedBox(height: 12),
-            const Text(
-              'MODO SUPER VELOZ',
-              style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '¡Entregas en tiempo récord!',
-              style: TextStyle(color: Colors.black),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.amber,
-              ),
-              child: const Text('Activar Modo'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Componente: EmergencyButtonCard
-class EmergencyButtonCard extends StatelessWidget {
-  const EmergencyButtonCard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: Colors.red,
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.black, size: 48),
-            const SizedBox(height: 12),
-            const Text(
-              'Botón de Emergencia',
-              style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Presiona en caso de emergencia',
-              style: TextStyle(color: Colors.black),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber,
-                foregroundColor: Colors.black,
-              ),
-              child: const Text('SOS'),
-            ),
-          ],
-        ),
       ),
     );
   }
