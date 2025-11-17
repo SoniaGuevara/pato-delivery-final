@@ -32,6 +32,36 @@ class PerfilScreen extends StatelessWidget {
                   content: Text(state.mensaje!),
                   backgroundColor: Colors.green.shade600,
                 ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: opciones.map((opcion) {
+              final selected = opcion.valor == perfil.disponibilidad;
+              return ChoiceChip(
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(opcion.icono, size: 16,
+                        color: selected ? Colors.black : opcion.color),
+                    const SizedBox(width: 6),
+                    Text(opcion.texto),
+                  ],
+                ),
+                selected: selected,
+                labelStyle: TextStyle(
+                  color: selected ? Colors.black : Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+                onSelected: selected
+                    ? null
+                    : (_) => context
+                        .read<PerfilBloc>()
+                        .add(PerfilCambiarDisponibilidad(opcion.valor)),
+                selectedColor: Colors.amber,
+                backgroundColor: _fieldColor,
+                side: BorderSide(color: opcion.color.withOpacity(0.5)),
               );
               context.read<PerfilBloc>().add(const PerfilNotificacionesLimpiadas());
             } else if (state.error != null) {
