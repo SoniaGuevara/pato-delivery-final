@@ -30,6 +30,8 @@ class HomeScreen extends StatelessWidget {
           children: [
             const OrderTrackingCard(),
             const SizedBox(height: 16),
+            const GamificationBanner(),
+            const SizedBox(height: 16),
             const DeliveryRankingCard(),
             const SizedBox(height: 16),
           ],
@@ -251,6 +253,245 @@ class DeliveryRankingCard extends StatelessWidget {
             style: const TextStyle(color: Colors.black),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class GamificationBanner extends StatelessWidget {
+  const GamificationBanner({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<RankingBloc, RankingState>(
+      builder: (context, state) {
+        if (state is! RankingCargado) {
+          return const _GamificationSkeleton();
+        }
+
+        final usuario = state.resumen.usuarioActual;
+        const metaSemanal = 20;
+        final entregasSemana = usuario.entregas % metaSemanal;
+        final faltan = entregasSemana == 0 && usuario.entregas < metaSemanal
+            ? metaSemanal
+            : (metaSemanal - entregasSemana) % metaSemanal;
+        final streakDias = (usuario.entregas ~/ 3).clamp(1, 7);
+        final logroRapido = usuario.tiempoPromedio <= 25;
+        final logroTitulo = logroRapido ? 'Repartidor Rápido' : 'Ritmo Constante';
+        final logroDescripcion = logroRapido
+            ? 'Promedio de ${usuario.tiempoPromedio} min por entrega'
+            : 'Objetivo: bajar de ${usuario.tiempoPromedio} min';
+
+        final tiles = [
+          _MotivationTile(
+            icon: Icons.flag_rounded,
+            gradient: const [Color(0xFFFFD54F), Color(0xFFFFB300)],
+            title: 'Tu meta semanal',
+            highlight: '$metaSemanal entregas',
+            subtitle: faltan == 0
+                ? '¡Meta alcanzada, crack!'
+                : faltan == 1
+                    ? '¡Solo 1 entrega más!'
+                    : '¡Faltan $faltan para lograrlo!',
+          ),
+          _MotivationTile(
+            icon: Icons.flash_on_rounded,
+            gradient: const [Color(0xFF616161), Color(0xFF212121)],
+            title: 'Racha activa',
+            highlight: '$streakDias días seguidos',
+            subtitle: 'Seguí así para sumar bonos',
+          ),
+          _MotivationTile(
+            icon: Icons.star_rounded,
+            gradient: const [Color(0xFFFF8F00), Color(0xFFFFC107)],
+            title: 'Nuevo logro',
+            highlight: logroTitulo,
+            subtitle: logroDescripcion,
+          ),
+        ];
+
+        return _GamificationFrame(children: tiles);
+      },
+    );
+  }
+}
+
+class _GamificationSkeleton extends StatelessWidget {
+  const _GamificationSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return _GamificationFrame(
+      children: const [
+        _MotivationTile.skeleton(),
+        _MotivationTile.skeleton(),
+        _MotivationTile.skeleton(),
+      ],
+    );
+  }
+}
+
+class _GamificationFrame extends StatelessWidget {
+  final List<_MotivationTile> children;
+
+  const _GamificationFrame({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.black,
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: const [
+                Icon(Icons.emoji_events, color: Colors.amber),
+                SizedBox(width: 8),
+                Text(
+                  'Tu semana en modo pro',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth < 500) {
+                  return Column(
+                    children: [
+                      for (int i = 0; i < children.length; i++) ...[
+                        children[i],
+                        if (i != children.length - 1)
+                          const SizedBox(height: 12),
+                      ],
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: children
+                      .map(
+                        (tile) => Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            child: tile,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MotivationTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String highlight;
+  final String subtitle;
+  final List<Color> gradient;
+  final bool showContent;
+
+  const _MotivationTile({
+    super.key,
+    this.icon = Icons.shield_moon,
+    this.title = '',
+    this.highlight = '',
+    this.subtitle = '',
+    this.gradient = const [Color(0xFF424242), Color(0xFF212121)],
+  }) : showContent = true;
+
+  const _MotivationTile.skeleton({super.key})
+      : icon = Icons.hourglass_bottom,
+        title = '',
+        highlight = '',
+        subtitle = '',
+        gradient = const [Color(0xFF424242), Color(0xFF212121)],
+        showContent = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: gradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: showContent
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(icon, color: Colors.white, size: 28),
+                const SizedBox(height: 12),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  highlight,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.white70),
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                _SkeletonLine(widthFactor: 0.3),
+                SizedBox(height: 8),
+                _SkeletonLine(widthFactor: 0.8),
+                SizedBox(height: 4),
+                _SkeletonLine(widthFactor: 0.6),
+              ],
+            ),
+    );
+  }
+}
+
+class _SkeletonLine extends StatelessWidget {
+  final double widthFactor;
+
+  const _SkeletonLine({required this.widthFactor});
+
+  @override
+  Widget build(BuildContext context) {
+    return FractionallySizedBox(
+      widthFactor: widthFactor,
+      child: Container(
+        height: 10,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.white10,
+        ),
       ),
     );
   }
