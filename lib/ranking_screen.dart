@@ -71,7 +71,7 @@ class RankingContent extends StatelessWidget {
 
     return Column(
       children: [
-        _RankingHeader(goldColor: goldColor),
+        const _RankingHeader(),
         if (topTres.length == 3)
           _PodiumWidget(repartidores: topTres)
         else
@@ -101,23 +101,20 @@ class RankingContent extends StatelessWidget {
 }
 
 class _RankingHeader extends StatelessWidget {
-  const _RankingHeader({required this.goldColor});
-
-  final Color goldColor;
+  const _RankingHeader();
 
   @override
   Widget build(BuildContext context) {
+    final titleStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: Colors.amber,
+          fontWeight: FontWeight.bold,
+        );
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Text(
         'Ranking Fabuloso',
         textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.w900,
-          color: goldColor,
-          letterSpacing: -0.5,
-        ),
+        style: titleStyle,
       ),
     );
   }
