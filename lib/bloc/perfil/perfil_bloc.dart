@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -20,6 +21,7 @@ class PerfilBloc extends Bloc<PerfilEvent, PerfilState> {
     on<PerfilFotoSeleccionada>(_onFotoSeleccionada);
     on<PerfilRegistrarEntrega>(_onRegistrarEntrega);
     on<PerfilNotificacionesLimpiadas>(_onNotificacionesLimpiadas);
+    on<PerfilErrorReportado>(_onErrorReportado);
 
     add(const PerfilSubscriptionRequested());
   }
@@ -50,12 +52,25 @@ class PerfilBloc extends Bloc<PerfilEvent, PerfilState> {
       return;
     }
 
-    emit(state.copyWith(status: PerfilStatus.loading));
-    await _perfilRepository.ensurePerfilExiste(uid: user.uid, email: user.email ?? '');
-    await _perfilSubscription?.cancel();
-    _perfilSubscription = _perfilRepository
-        .escucharPerfil(user.uid)
-        .listen((perfil) => add(PerfilDatosRecibidos(perfil)));
+    emit(state.copyWith(status: PerfilStatus.loading, limpiarError: true, limpiarMensaje: true));
+    try {
+      await _perfilRepository.ensurePerfilExiste(uid: user.uid, email: user.email ?? '');
+      await _perfilSubscription?.cancel();
+      _perfilSubscription = _perfilRepository.escucharPerfil(user.uid).listen(
+            (perfil) => add(PerfilDatosRecibidos(perfil)),
+            onError: (error, __) => add(PerfilErrorReportado(_mensajeDesdeError(error))),
+          );
+    } on FirebaseException catch (error) {
+      emit(state.copyWith(
+        status: PerfilStatus.loaded,
+        error: _mensajeDesdeError(error),
+      ));
+    } catch (_) {
+      emit(state.copyWith(
+        status: PerfilStatus.loaded,
+        error: 'No se pudo cargar tu perfil. Intenta nuevamente más tarde.',
+      ));
+    }
   }
 
   void _onDatosRecibidos(
@@ -146,6 +161,26 @@ class PerfilBloc extends Bloc<PerfilEvent, PerfilState> {
       return;
     }
     emit(state.copyWith(limpiarMensaje: true, limpiarError: true));
+  }
+
+  void _onErrorReportado(
+    PerfilErrorReportado event,
+    Emitter<PerfilState> emit,
+  ) {
+    emit(state.copyWith(
+      status: PerfilStatus.loaded,
+      error: event.mensaje,
+    ));
+  }
+
+  String _mensajeDesdeError(Object error) {
+    if (error is FirebaseException) {
+      if (error.code == 'permission-denied') {
+        return 'Tu cuenta no tiene permisos para leer el perfil en Firestore.';
+      }
+      return 'Error de Firebase (${error.code}). Intenta nuevamente más tarde.';
+    }
+    return 'Ocurrió un problema inesperado al cargar tu perfil.';
   }
 
   @override
