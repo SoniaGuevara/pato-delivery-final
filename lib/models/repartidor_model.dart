@@ -17,6 +17,24 @@ class Repartidor extends Equatable {
     required this.avatarUrl,
   });
 
+  Repartidor copyWith({
+    int? rank,
+    String? nombre,
+    int? entregas,
+    double? rating,
+    int? tiempoPromedio,
+    String? avatarUrl,
+  }) {
+    return Repartidor(
+      rank: rank ?? this.rank,
+      nombre: nombre ?? this.nombre,
+      entregas: entregas ?? this.entregas,
+      rating: rating ?? this.rating,
+      tiempoPromedio: tiempoPromedio ?? this.tiempoPromedio,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+    );
+  }
+
   @override
   List<Object?> get props => [rank, nombre, entregas, rating, tiempoPromedio, avatarUrl];
 }
