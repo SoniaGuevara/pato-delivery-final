@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pato_delivery_final/bloc/pedidos/pedidos_bloc.dart';
 import 'package:pato_delivery_final/bloc/pedidos/pedidos_event.dart';
 import 'package:pato_delivery_final/bloc/pedidos/pedidos_state.dart';
+import 'package:pato_delivery_final/bloc/perfil/perfil_bloc.dart';
+import 'package:pato_delivery_final/bloc/perfil/perfil_event.dart';
 import 'package:pato_delivery_final/bloc/ranking/ranking_bloc.dart';
 import 'package:pato_delivery_final/bloc/ranking/ranking_event.dart';
 import 'package:pato_delivery_final/models/pedido_model.dart';
