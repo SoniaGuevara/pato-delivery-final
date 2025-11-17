@@ -32,36 +32,6 @@ class PerfilScreen extends StatelessWidget {
                   content: Text(state.mensaje!),
                   backgroundColor: Colors.green.shade600,
                 ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: opciones.map((opcion) {
-              final selected = opcion.valor == perfil.disponibilidad;
-              return ChoiceChip(
-                label: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(opcion.icono, size: 16,
-                        color: selected ? Colors.black : opcion.color),
-                    const SizedBox(width: 6),
-                    Text(opcion.texto),
-                  ],
-                ),
-                selected: selected,
-                labelStyle: TextStyle(
-                  color: selected ? Colors.black : Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-                onSelected: selected
-                    ? null
-                    : (_) => context
-                        .read<PerfilBloc>()
-                        .add(PerfilCambiarDisponibilidad(opcion.valor)),
-                selectedColor: Colors.amber,
-                backgroundColor: _fieldColor,
-                side: BorderSide(color: opcion.color.withOpacity(0.5)),
               );
               context.read<PerfilBloc>().add(const PerfilNotificacionesLimpiadas());
             } else if (state.error != null) {
@@ -423,39 +393,6 @@ class PerfilScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    TextInputType keyboardType = TextInputType.text,
-    String? Function(String?)? validator,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: TextFormField(
-        controller: controller,
-        validator: validator,
-        keyboardType: keyboardType,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(color: Colors.white70),
-          filled: true,
-          fillColor: _fieldColor,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Colors.white24),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Colors.amber),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _StatCard extends StatelessWidget {
@@ -575,18 +512,18 @@ class _PerfilEditorSheetState extends State<_PerfilEditorSheet> {
                     ?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 24),
-              _buildTextField(
+              _buildEditorTextField(
                 controller: _nombreController,
                 label: 'Nombre y apellido',
                 validator: (value) => value == null || value.trim().isEmpty
                     ? 'Ingresa tu nombre'
                     : null,
               ),
-              _buildTextField(
+              _buildEditorTextField(
                 controller: _dniController,
                 label: 'DNI',
               ),
-              _buildTextField(
+              _buildEditorTextField(
                 controller: _telefonoController,
                 label: 'Teléfono',
                 keyboardType: TextInputType.phone,
@@ -626,4 +563,38 @@ class _DisponibilidadOption {
   final String texto;
   final IconData icono;
   final Color color;
+}
+
+Widget _buildEditorTextField({
+  required TextEditingController controller,
+  required String label,
+  TextInputType keyboardType = TextInputType.text,
+  String? Function(String?)? validator,
+}) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 16),
+    child: TextFormField(
+      controller: controller,
+      validator: validator,
+      keyboardType: keyboardType,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.white70),
+        filled: true,
+        fillColor: PerfilScreen._fieldColor,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.white24),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.amber),
+        ),
+      ),
+    ),
+  );
 }
