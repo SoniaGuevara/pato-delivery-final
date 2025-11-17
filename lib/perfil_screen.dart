@@ -264,43 +264,61 @@ class PerfilScreen extends StatelessWidget {
   Widget _buildStats(PerfilUsuario perfil) {
     final registro =
         '${perfil.fechaRegistro.day}/${perfil.fechaRegistro.month}/${perfil.fechaRegistro.year}';
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: _StatCard(
-            title: 'Calificación',
-            value: perfil.rating.toStringAsFixed(1),
-            icon: Icons.star,
-            subtitle: 'Promedio de clientes',
-            color: Colors.amber,
-            height: _statCardHeight,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _StatCard(
-            title: 'Entregas',
-            value: perfil.totalEntregas.toString(),
-            icon: Icons.local_shipping,
-            subtitle: 'Completadas',
-            color: Colors.greenAccent,
-            height: _statCardHeight,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _StatCard(
-            title: 'Alta',
-            value: registro,
-            icon: Icons.calendar_month,
-            subtitle: 'Fecha de registro',
-            color: Colors.blueAccent,
-            height: _statCardHeight,
-          ),
-        ),
-      ],
+    final cards = [
+      _StatCard(
+        title: 'Calificación',
+        value: perfil.rating.toStringAsFixed(1),
+        icon: Icons.star,
+        subtitle: 'Promedio de clientes',
+        color: Colors.amber,
+        height: _statCardHeight,
+      ),
+      _StatCard(
+        title: 'Entregas',
+        value: perfil.totalEntregas.toString(),
+        icon: Icons.local_shipping,
+        subtitle: 'Completadas',
+        color: Colors.greenAccent,
+        height: _statCardHeight,
+      ),
+      _StatCard(
+        title: 'Alta',
+        value: registro,
+        icon: Icons.calendar_month,
+        subtitle: 'Fecha de registro',
+        color: Colors.blueAccent,
+        height: _statCardHeight,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth;
+        final columns = _statColumnsForWidth(maxWidth);
+        const spacing = 16.0;
+        final totalSpacing = spacing * (columns - 1);
+        final cardWidth = (maxWidth - totalSpacing) / columns;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: cards
+              .map(
+                (card) => SizedBox(
+                  width: cardWidth,
+                  child: card,
+                ),
+              )
+              .toList(),
+        );
+      },
     );
+  }
+
+  int _statColumnsForWidth(double maxWidth) {
+    if (maxWidth >= 900) return 3;
+    if (maxWidth >= 600) return 2;
+    return 1;
   }
 
   Widget _buildInfoDetails(PerfilUsuario perfil) {
@@ -436,18 +454,26 @@ class _StatCard extends StatelessWidget {
             value,
             style: const TextStyle(
               color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             title,
-            style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
             subtitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(color: Colors.white54, fontSize: 12),
           ),
         ],
