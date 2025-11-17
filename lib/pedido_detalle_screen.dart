@@ -19,6 +19,9 @@ class PedidoDetalleScreen extends StatelessWidget {
     context
         .read<RankingBloc>()
         .add(const RegistrarEntregaUsuarioActual());
+    context
+        .read<PerfilBloc>()
+        .add(const PerfilRegistrarEntrega());
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Pedido marcado como entregado')),
     );

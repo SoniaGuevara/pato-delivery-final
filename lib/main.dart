@@ -10,11 +10,13 @@ import 'package:pato_delivery_final/bloc/auth/auth_event.dart';
 import 'package:pato_delivery_final/bloc/pedidos/pedidos_bloc.dart';
 import 'package:pato_delivery_final/bloc/pedidos/pedidos_event.dart';
 import 'package:pato_delivery_final/bloc/pedidos/pedidos_state.dart';
+import 'package:pato_delivery_final/bloc/perfil/perfil_bloc.dart';
 import 'package:pato_delivery_final/bloc/ranking/ranking_bloc.dart';
 import 'package:pato_delivery_final/bloc/ranking/ranking_event.dart';
 
 // 🔹 Repositorios
 import 'package:pato_delivery_final/repositories/pedidos_repository.dart';
+import 'package:pato_delivery_final/repositories/perfil_repository.dart';
 import 'package:pato_delivery_final/repositories/ranking_repository.dart';
 
 // 🔹 Pantallas
@@ -38,6 +40,7 @@ class MyApp extends StatelessWidget {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider(create: (_) => PedidosRepository()),
+        RepositoryProvider(create: (_) => PerfilRepository()),
         RepositoryProvider(create: (_) => RankingRepository()),
       ],
       child: MultiBlocProvider(
@@ -58,6 +61,10 @@ class MyApp extends StatelessWidget {
           BlocProvider(
             create: (context) =>
             RankingBloc(context.read<RankingRepository>())..add(const CargarRanking()),
+          ),
+          BlocProvider(
+            create: (context) =>
+                PerfilBloc(context.read<PerfilRepository>(), FirebaseAuth.instance),
           ),
         ],
         child: MaterialApp(
