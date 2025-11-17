@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../bloc/auth/auth_bloc.dart';
 import '../bloc/auth/auth_event.dart';
 import '../bloc/perfil/perfil_bloc.dart';
+import '../bloc/perfil/perfil_event.dart';
 import '../bloc/perfil/perfil_state.dart';
 import '../models/perfil_usuario.dart';
 
